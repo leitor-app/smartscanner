@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Scanner App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --primary: #00d2ff;
+      --primary-hover: #3a7bd5;
+      --text-main: #ffffff;
+      --text-muted: #b0bec5;
+      --success: #00e676;
+      --error: #ff5252;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+
+    body {
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .app-container {
+      background: var(--glass-bg);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 40px;
+      width: 100%;
+      max-width: 450px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .app-container::before {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(circle, rgba(0, 210, 255, 0.1) 0%, transparent 60%);
+      animation: rotate 20s linear infinite;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .content-wrapper { position: relative; z-index: 1; }
+
+    header { text-align: center; margin-bottom: 10px; }
+    header h1 { font-size: 28px; font-weight: 700; background: -webkit-linear-gradient(45deg, #00d2ff, #3a7bd5); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    header p { font-size: 14px; color: var(--text-muted); margin-top: 5px; }
+
+    .input-group { display: flex; flex-direction: column; gap: 8px; }
+    .input-group label { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .search-row { display: flex; gap: 10px; }
+    
+    input, select {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--glass-border);
+      color: var(--text-main);
+      padding: 14px 16px;
+      border-radius: 12px;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      outline: none;
+    }
+    
+    select option { background: #203a43; color: #fff; }
+
+    input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 210, 255, 0.2); }
+
+    .btn {
+      background: linear-gradient(45deg, #3a7bd5, #00d2ff);
+      color: #fff;
+      border: none;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 210, 255, 0.4); }
+    .btn:active { transform: translateY(0); }
+    
+    .btn-icon { padding: 14px; }
+    .btn-secondary { background: rgba(255, 255, 255, 0.1); border: 1px solid var(--glass-border); }
+    .btn-secondary:hover { background: rgba(255, 255, 255, 0.15); box-shadow: 0 8px 20px rgba(255, 255, 255, 0.1); }
+
+    .product-card {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      min-height: 200px;
+      justify-content: center;
+      text-align: center;
+      display: none;
+    }
+
+    .product-card.visible { opacity: 1; transform: translateY(0); display: flex; }
+
+    .product-image {
+      width: 140px; height: 140px;
+      border-radius: 16px;
+      object-fit: contain;
+      background: #fff;
+      padding: 10px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    }
+
+    .badge { background: rgba(0, 230, 118, 0.2); color: var(--success); padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-top: -10px; display: none;}
+    .badge-api { background: rgba(0, 210, 255, 0.2); color: #00d2ff; }
+
+    .loader {
+      width: 40px; height: 40px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-radius: 50%;
+      border-top-color: var(--primary);
+      animation: spin 1s ease-in-out infinite;
+      display: none;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .actions { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
+
+    /* Toast Notification */
+    #toast {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+      background: #333; color: #fff; padding: 12px 24px; border-radius: 30px;
+      font-weight: 600; font-size: 14px; opacity: 0; transition: all 0.4s ease;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 100;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    #toast.success { background: var(--success); color: #000; }
+    #toast.error { background: var(--error); color: #fff; }
+
+    .price-list-item {
+      display: flex; justify-content: space-between; align-items: center; 
+      background: rgba(0,210,255,0.1); padding: 10px; border-radius: 8px; margin-bottom: 6px;
+    }
+    
+    .sug-item { padding: 12px 15px; border-radius: 8px; cursor: pointer; display:flex; flex-direction:column; gap: 4px; transition: 0.2s; }
+    .sug-item:hover { background: rgba(0,210,255,0.15); }
+    .sug-name { font-size:14px; font-weight:600; color:#fff; }
+    .sug-code { font-size:12px; color:var(--text-muted); }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- TELA 1: SCANNER -->
+    <div class="content-wrapper" id="scannerScreen">
+      <header>
+        <h1>Smart Scanner</h1>
+        <p>Produtos e Preços na sua Planilha</p>
+      </header>
+
+      <div class="input-group">
+        <label for="barcode">Pesquisar por Código ou Nome</label>
+        <div class="search-row" style="position: relative;">
+          <input type="text" inputmode="text" id="barcode" placeholder="Ex: Yakult ou 789..." autocomplete="off">
+          <button class="btn btn-icon" id="scanCameraBtn" title="Ler Código com a Câmera" style="background: linear-gradient(45deg, #00d2ff, #3a7bd5); padding: 12px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5v2a2 2 0 0 0 2 2h2"></path><path d="M4 19v-2a2 2 0 0 1 2-2h2"></path><path d="M20 5v2a2 2 0 0 1-2 2h-2"></path><path d="M20 19v-2a2 2 0 0 0-2-2h-2"></path><line x1="9" y1="9" x2="9" y2="15"></line><line x1="12" y1="9" x2="12" y2="15"></line><line x1="15" y1="9" x2="15" y2="15"></line></svg>
+          </button>
+          <button class="btn btn-icon" id="searchBtn" title="Pesquisar">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          </button>
+          
+          <!-- Menu Suspenso de Sugestões -->
+          <ul id="suggestionsList" style="display: none; position: absolute; top: calc(100% + 8px); left: 0; width: 100%; max-height: 250px; overflow-y: auto; background: #1b2a33; border: 1px solid var(--glass-border); border-radius: 12px; z-index: 50; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.8); list-style: none; padding: 5px;"></ul>
+        </div>
+      </div>
+
+      <div id="reader-container" style="display: none; width: 100%; flex-direction: column; align-items: center; background: rgba(0,0,0,0.5); border-radius: 16px; padding: 15px; margin-bottom: 20px;">
+          <p style="color: #00d2ff; font-weight: bold; margin-bottom: 10px; font-size: 14px;">Centralize o código de barras</p>
+          <div id="reader" style="width: 100%; border-radius: 12px; overflow: hidden; box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);"></div>
+          <button class="btn btn-secondary" id="closeScannerBtn" style="margin-top: 15px; width: 100%;">Cancelar Câmera</button>
+      </div>
+
+      <div class="product-card" id="productCard" style="display: flex;">
+        <div class="loader" id="loader"></div>
+        
+        <div id="emptyState" style="color: var(--text-muted); font-size: 14px;">
+          Digite ou escaneie um código para buscar.
+        </div>
+
+        <div id="productContent" style="display: none; width: 100%; flex-direction: column; align-items: center; gap: 15px;">
+          <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;">
+          <img id="productImage" class="product-image" src="" alt="Produto">
+          <div id="historyBadge" class="badge"></div>
+          
+          <div class="input-group" style="width: 100%; align-items: center;">
+            <input type="text" id="productName" value="Nome do Produto" style="text-align: center; font-size: 16px; font-weight: 600; width: 100%; padding: 8px;">
+          </div>
+          
+          <div id="pricesList" style="width: 100%; text-align: left; margin-bottom: 5px;"></div>
+          
+          <div style="width: 100%; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid var(--glass-border);">
+            <p style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 10px; text-align: left;">Adicionar / Atualizar Preço</p>
+            <div class="input-group" style="width: 100%; align-items: flex-start; margin-bottom: 10px;">
+              <select id="marketSelect" style="width: 100%; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--glass-border); color: var(--text-main); padding: 12px; border-radius: 8px; font-size: 14px; outline: none;">
+                <option value="">Carregando...</option>
+              </select>
+            </div>
+            
+            <div class="input-group" style="width: 100%; align-items: flex-start;">
+              <input type="number" id="price" step="0.01" placeholder="Preço (R$ 0.00)" style="text-align: center; font-size: 18px; font-weight: bold; width: 100%;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn" id="saveBtn" style="display: none;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          Salvar Preço na Planilha
+        </button>
+        
+        <button class="btn btn-secondary" id="openMarketBtn" style="background: rgba(0, 210, 255, 0.1); border-color: rgba(0, 210, 255, 0.3); color: #00d2ff;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          Cadastrar Supermercado
+        </button>
+      </div>
+    </div>
+
+    <!-- TELA 2: CADASTRO DE SUPERMERCADO -->
+    <div class="content-wrapper" id="marketScreen" style="display: none;">
+      <header>
+        <h1>Novo Local</h1>
+        <p>Cadastre um Supermercado</p>
+      </header>
+
+      <div class="input-group" style="margin-top: 20px;">
+        <label for="marketName">Nome do Supermercado</label>
+        <input type="text" id="marketName" placeholder="Ex: Supermercado Extra" autocomplete="off">
+      </div>
+
+      <div class="actions" style="margin-top: 30px;">
+        <button class="btn" id="saveMarketBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          Salvar Local
+        </button>
+        <button class="btn btn-secondary" id="backToScannerBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          Voltar para Scanner
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    // ==========================================
+    // CONFIGURAÇÃO DA API DO APP SCRIPT
+    // ==========================================
+    const API_URL = "https://script.google.com/macros/s/AKfycbyKuA_RKVPZfXwy1SIyjI9aWIQrsRrD5bFJGaNdOUfAvLumpQKUVu7fBXRyR7AA-YiY/exec";
+
+    const AppElements = {
+      barcode: document.getElementById('barcode'),
+      suggestionsList: document.getElementById('suggestionsList'),
+      scanCameraBtn: document.getElementById('scanCameraBtn'),
+      readerContainer: document.getElementById('reader-container'),
+      closeScannerBtn: document.getElementById('closeScannerBtn'),
+      searchBtn: document.getElementById('searchBtn'),
+      loader: document.getElementById('loader'),
+      productContent: document.getElementById('productContent'),
+      emptyState: document.getElementById('emptyState'),
+      productCard: document.getElementById('productCard'),
+      productImage: document.getElementById('productImage'),
+      productName: document.getElementById('productName'),
+      pricesList: document.getElementById('pricesList'),
+      marketSelect: document.getElementById('marketSelect'),
+      price: document.getElementById('price'),
+      saveBtn: document.getElementById('saveBtn'),
+      historyBadge: document.getElementById('historyBadge'),
+      toast: document.getElementById('toast'),
+      openMarketBtn: document.getElementById('openMarketBtn'),
+      marketScreen: document.getElementById('marketScreen'),
+      scannerScreen: document.getElementById('scannerScreen'),
+      marketName: document.getElementById('marketName'),
+      saveMarketBtn: document.getElementById('saveMarketBtn'),
+      backToScannerBtn: document.getElementById('backToScannerBtn'),
+      cameraInput: document.getElementById('cameraInput')
+    };
+
+    let currentProduct = null;
+    let globalSupermercados = [];
+    let globalDicionario = [];
+
+    // ==========================================
+    // COMUNICAÇÃO EXTERNA COM A PLANILHA (FETCH)
+    // ==========================================
+    async function callBackend(method, params = {}) {
+        if (API_URL === "COLE_SUA_URL_DO_APPS_SCRIPT_AQUI") {
+            showToast("Aviso: Falta colocar sua URL no código (API_URL)!", "error");
+            throw new Error("API_URL não configurada.");
+        }
+        
+        const payload = { method: method, ...params };
+        
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (data.erro) throw new Error(data.erro);
+            return data;
+        } catch (e) {
+            console.error("Erro API:", e);
+            throw e;
+        }
+    }
+
+    function carregarDicionario() {
+       if (API_URL === "COLE_SUA_URL_DO_APPS_SCRIPT_AQUI") {
+           globalDicionario = [{codigo: "789", nome: "Configure na linha 318 primeiro"}];
+           return;
+       }
+       callBackend('buscarDicionarioProdutos')
+           .then(res => { globalDicionario = res || []; })
+           .catch(e => { globalDicionario = []; });
+    }
+
+    function showToast(msg, type) {
+      if (!type) type = 'success';
+      AppElements.toast.textContent = msg;
+      AppElements.toast.className = 'show ' + type;
+      setTimeout(function() { AppElements.toast.className = ''; }, 3000);
+    }
+
+    function setLoading(isLoading) {
+      if (isLoading) {
+        AppElements.productCard.classList.add('visible');
+        AppElements.loader.style.display = 'block';
+        AppElements.productContent.style.display = 'none';
+        AppElements.emptyState.style.display = 'none';
+        AppElements.saveBtn.style.display = 'none';
+      } else {
+        AppElements.loader.style.display = 'none';
+      }
+    }
+
+    async function searchProduct() {
+      try {
+        const code = AppElements.barcode.value.trim();
+        if (!code) {
+          showToast('Insira um código de barras', 'error');
+          return;
+        }
+
+        setLoading(true);
+        AppElements.price.value = '';
+        
+        if (API_URL !== "COLE_SUA_URL_DO_APPS_SCRIPT_AQUI") {
+            callBackend('buscarProdutoNaPlanilha', { codigo: code })
+              .then(res => handleSheetResult(res, code))
+              .catch(err => {
+                 console.error('API Error:', err);
+                 showToast('Erro interno. Buscando na web...', 'error');
+                 fetchFromAPI(code);
+              });
+        } else {
+            fetchFromAPI(code);
+        }
+      } catch (err) {
+        alert('Erro crítico ao pesquisar: ' + err.message);
+        setLoading(false);
+      }
+    }
+
+    function handleSheetResult(result, code) {
+      if (result && result.supermercadosDisponiveis) {
+         globalSupermercados = result.supermercadosDisponiveis;
+      }
+      
+      if (result && result.encontrado) {
+        currentProduct = {
+          codigo: code,
+          nome: result.nome,
+          foto: result.foto,
+          preco: '',
+          precos: result.precos || [],
+          supermercadosDisponiveis: globalSupermercados
+        };
+        renderProduct('sheet');
+      } else {
+        fetchFromAPI(code);
+      }
+    }
+
+    async function fetchFromAPI(code) {
+      try {
+        const response = await fetch('https://world.openfoodfacts.org/api/v0/product/' + code + '.json');
+        const data = await response.json();
+        
+        if (data.status === 1 && data.product) {
+          currentProduct = {
+            codigo: code,
+            nome: data.product.product_name_pt || data.product.product_name || 'Novo Produto',
+            foto: data.product.image_url || 'https://via.placeholder.com/150?text=Sem+Foto',
+            preco: '',
+            precos: [],
+            supermercadosDisponiveis: globalSupermercados
+          };
+          renderProduct('api');
+        } else {
+          currentProduct = {
+            codigo: code,
+            nome: 'Produto Novo (Renomeie)',
+            foto: 'https://via.placeholder.com/150?text=Sem+Foto',
+            preco: '',
+            precos: [],
+            supermercadosDisponiveis: globalSupermercados
+          };
+          renderProduct('api_not_found');
+          showToast('Adicione este produto pela primeira vez!', 'success');
+        }
+      } catch (error) {
+        currentProduct = {
+          codigo: code,
+          nome: 'Produto (Erro da Web)',
+          foto: 'https://via.placeholder.com/150?text=Sem+Foto',
+          preco: '',
+          precos: [],
+          supermercadosDisponiveis: globalSupermercados
+        };
+        renderProduct('api_not_found');
+      }
+    }
+
+    function renderProduct(source) {
+      setLoading(false);
+      AppElements.productContent.style.display = 'flex';
+      
+      let fotoVisual = currentProduct.foto;
+      if (!fotoVisual || fotoVisual.indexOf('via.placeholder.com') !== -1) {
+         fotoVisual = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23203a43' rx='24'/%3E%3Ccircle cx='100' cy='90' r='50' fill='%2300d2ff' opacity='0.05'/%3E%3Cpath d='M70 70h10l13 40h35l10-30H85' fill='none' stroke='%2300d2ff' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='102' cy='125' r='6' fill='%233a7bd5'/%3E%3Ccircle cx='123' cy='125' r='6' fill='%233a7bd5'/%3E%3Ctext x='100' y='165' font-family='sans-serif' font-size='16' font-weight='bold' fill='%23b0bec5' text-anchor='middle' letter-spacing='1'%3EPRODUTO%3C/text%3E%3C/svg%3E";
+      }
+      
+      AppElements.productImage.src = fotoVisual;
+      AppElements.productName.value = currentProduct.nome;
+      
+      // Renderização do histórico de preços
+      let precosHtml = '';
+      let contagemPrecos = 0;
+      
+      if (currentProduct.precos && currentProduct.precos.length > 0) {
+         let subHtml = '<ul style="list-style: none; padding: 0; width: 100%; max-height: 150px; overflow-y: auto; margin-top: 5px;">';
+         
+         currentProduct.precos.forEach(function(p) {
+             let num = parseFloat(String(p.preco).replace(',', '.'));
+             if (!isNaN(num) && num > 0) {
+                 contagemPrecos++;
+                 subHtml += '<li class="price-list-item">' +
+                               '<span style="text-align: left; line-height: 1.2;"><b>' + p.supermercado + '</b><br><small style="color:var(--text-muted); font-size:11px;">' + p.data + '</small></span>' +
+                               '<span style="font-size: 16px; font-weight:bold; color:var(--success);">R$ ' + num.toFixed(2) + '</span></li>';
+             }
+         });
+         
+         subHtml += '</ul>';
+         if (contagemPrecos > 0) {
+            precosHtml = '<h4 style="font-size: 13px; color: var(--text-muted); margin-bottom: 2px; text-transform: uppercase;">Histórico de Preços:</h4>' + subHtml;
+         }
+      }
+      
+      if (contagemPrecos === 0) {
+         precosHtml = '<p style="font-size: 13px; color: var(--text-muted); padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; text-align: center;">Nenhum preço cadastrado.</p>';
+      }
+      
+      AppElements.pricesList.innerHTML = precosHtml;
+      
+      // Dropdown Mercados
+      let optionsHtml = '<option value="">-- Selecione o Supermercado --</option>';
+      if (globalSupermercados && globalSupermercados.length > 0) {
+          globalSupermercados.forEach(function(nome) {
+              optionsHtml += '<option value="' + nome + '">' + nome + '</option>';
+          });
+      } else {
+          optionsHtml = '<option value="Padrão">Padrão (Cadastre um mercado depois)</option>';
+      }
+      AppElements.marketSelect.innerHTML = optionsHtml;
+      
+      // Badges
+      if (source === 'sheet') {
+        AppElements.historyBadge.className = 'badge';
+        AppElements.historyBadge.innerHTML = 'Encontrado na Planilha';
+        AppElements.historyBadge.style.display = 'block';
+      } else if (source === 'api') {
+        AppElements.historyBadge.className = 'badge badge-api';
+        AppElements.historyBadge.innerHTML = 'Novo da Open Food Facts';
+        AppElements.historyBadge.style.display = 'block';
+      } else {
+        AppElements.historyBadge.className = 'badge';
+        AppElements.historyBadge.style.background = 'rgba(255, 82, 82, 0.2)';
+        AppElements.historyBadge.style.color = 'var(--error)';
+        AppElements.historyBadge.innerHTML = 'Preenchimento Manual';
+        AppElements.historyBadge.style.display = 'block';
+      }
+      
+      AppElements.saveBtn.style.display = 'flex';
+      AppElements.price.focus();
+    }
+
+    function saveToSheet() {
+      const marketVal = AppElements.marketSelect.value;
+      if (!marketVal) {
+        showToast('Selecione um supermercado na lista!', 'error');
+        AppElements.marketSelect.focus();
+        return;
+      }
+    
+      let priceInputText = AppElements.price.value;
+      if (!priceInputText) {
+          showToast('Insira um preço válido (ex: 5.99)!', 'error');
+          AppElements.price.focus();
+          return;
+      }
+      
+      const priceVal = parseFloat(priceInputText.replace(',', '.'));
+      if (isNaN(priceVal) || priceVal <= 0) {
+        showToast('Insira apenas números (ex: 5.99)!', 'error');
+        AppElements.price.focus();
+        return;
+      }
+
+      currentProduct.preco = priceVal;
+      currentProduct.supermercadoSelecionado = marketVal;
+      currentProduct.nome = AppElements.productName.value.trim() || 'Produto Atualizado';
+      
+      const originalText = AppElements.saveBtn.innerHTML;
+      AppElements.saveBtn.innerHTML = 'Salvando...';
+      AppElements.saveBtn.disabled = true;
+
+      callBackend('salvarProdutoNaPlanilha', { dadosProduto: currentProduct })
+        .then(res => {
+            showToast(res.mensagem || "Salvo!", 'success');
+            setTimeout(resetApp, 1500);
+        })
+        .catch(err => {
+            showToast('Erro ao salvar no Servidor!', 'error');
+            AppElements.saveBtn.innerHTML = originalText;
+            AppElements.saveBtn.disabled = false;
+        });
+    }
+
+    function resetApp() {
+      AppElements.barcode.value = '';
+      AppElements.productCard.classList.remove('visible');
+      AppElements.productContent.style.display = 'none';
+      AppElements.emptyState.style.display = 'block';
+      AppElements.emptyState.textContent = 'Digite um código de barras...';
+      AppElements.saveBtn.style.display = 'none';
+      AppElements.saveBtn.innerHTML = 'Salvar Preço na Planilha';
+      AppElements.saveBtn.disabled = false;
+      currentProduct = null;
+      AppElements.barcode.focus();
+    }
+
+    // ===================================
+    // LOGICA DE LEITURA DO CODIGO PELA CÂMERA (AO VIVO EM TELA MENOR)
+    // Funciona perfeitamente hospedado no Github Pages!
+    // ===================================
+    let html5QrcodeScanner = null;
+
+    function startScanner() {
+      AppElements.productCard.style.display = 'none';
+      AppElements.saveBtn.style.display = 'none';
+      AppElements.openMarketBtn.style.display = 'none';
+      AppElements.readerContainer.style.display = 'flex';
+      
+      if (!html5QrcodeScanner) {
+        html5QrcodeScanner = new Html5QrcodeScanner(
+          "reader", 
+          { fps: 15, qrbox: {width: 250, height: 120}, aspectRatio: 1.0, disableFlip: false }
+        );
+      }
+      
+      html5QrcodeScanner.render((decodedText) => {
+        AppElements.barcode.value = decodedText;
+        stopScanner();
+        showToast("Código Lido com Sucesso!", "success");
+        setTimeout(function() { searchProduct(); }, 300);
+      }, (error) => { /* ignora avisos de busca */ });
+    }
+
+    function stopScanner() {
+      if (html5QrcodeScanner) {
+        html5QrcodeScanner.clear().catch(e => console.log('Erro ao fechar scanner', e));
+      }
+      AppElements.readerContainer.style.display = 'none';
+      AppElements.productCard.style.display = 'flex';
+      AppElements.openMarketBtn.style.display = 'block';
+    }
+
+    AppElements.scanCameraBtn.addEventListener('click', startScanner);
+    AppElements.closeScannerBtn.addEventListener('click', stopScanner);
+
+    AppElements.searchBtn.addEventListener('click', searchProduct);
+    AppElements.barcode.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') searchProduct();
+    });
+    
+    AppElements.saveBtn.addEventListener('click', saveToSheet);
+    
+    // Navegação Supermercado
+    AppElements.openMarketBtn.addEventListener('click', function() {
+      AppElements.scannerScreen.style.display = 'none';
+      AppElements.marketScreen.style.display = 'block';
+      AppElements.marketName.focus();
+    });
+
+    AppElements.backToScannerBtn.addEventListener('click', function() {
+      AppElements.marketScreen.style.display = 'none';
+      AppElements.scannerScreen.style.display = 'block';
+    });
+
+    AppElements.saveMarketBtn.addEventListener('click', function() {
+      const name = AppElements.marketName.value.trim();
+      if (!name) {
+        showToast('Digite o nome!', 'error');
+        AppElements.marketName.focus();
+        return;
+      }
+
+      const originalText = AppElements.saveMarketBtn.innerHTML;
+      AppElements.saveMarketBtn.innerHTML = 'Salvando...';
+      AppElements.saveMarketBtn.disabled = true;
+
+      if (globalSupermercados && !globalSupermercados.includes(name)) {
+          globalSupermercados.push(name);
+      }
+
+      callBackend('salvarSupermercadoNaPlanilha', { nomeMercado: name })
+        .then(res => {
+            showToast(res.mensagem || "Mercado salvo!", 'success');
+            AppElements.marketName.value = '';
+            AppElements.saveMarketBtn.innerHTML = originalText;
+            AppElements.saveMarketBtn.disabled = false;
+            AppElements.backToScannerBtn.click();
+        })
+        .catch(err => {
+            showToast('Erro ao salvar supermercado!', 'error');
+            AppElements.saveMarketBtn.innerHTML = originalText;
+            AppElements.saveMarketBtn.disabled = false;
+        });
+    });
+
+    // ===================================
+    // LOGICA DA CÂMERA E COMPRESSAO DE IMAGEM
+    // ===================================
+    AppElements.productImage.style.cursor = 'pointer';
+    AppElements.productImage.title = 'Clique para tirar ou alterar a foto do produto';
+    AppElements.productImage.addEventListener('click', function() {
+        if (currentProduct) {
+            AppElements.cameraInput.click();
+        }
+    });
+
+    AppElements.cameraInput.addEventListener('change', function(e) {
+       const file = e.target.files[0];
+       if (!file) return;
+       
+       showToast("Comprimindo a imagem...", "success");
+       AppElements.productImage.style.opacity = '0.5';
+       
+       const reader = new FileReader();
+       reader.onload = function(event) {
+           const img = new Image();
+           img.onload = function() {
+               const MAX_DIM = 600;
+               let w = img.width;
+               let h = img.height;
+               
+               if (w > h && w > MAX_DIM) {
+                   h = Math.round(h * (MAX_DIM / w));
+                   w = MAX_DIM;
+               } else if (h > MAX_DIM) {
+                   w = Math.round(w * (MAX_DIM / h));
+                   h = MAX_DIM;
+               }
+               
+               const canvas = document.createElement("canvas");
+               canvas.width = w; canvas.height = h;
+               const ctx = canvas.getContext("2d");
+               ctx.drawImage(img, 0, 0, w, h);
+               
+               // Converte para JPG 70% de qualidade
+               const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+               const base64Data = dataUrl.split(",")[1];
+               
+               // Feedback visual instantâneo pro usuário
+               AppElements.productImage.src = dataUrl;
+               AppElements.productImage.style.opacity = '1.0';
+               currentProduct.foto = dataUrl;
+               
+               showToast("Salvando foto no seu Google Drive...", "success");
+               
+               callBackend('salvarImagemNoDrive', { codigo: currentProduct.codigo, base64Data: base64Data })
+                 .then(res => {
+                     if(res.sucesso) {
+                         currentProduct.foto = res.url;
+                         AppElements.productImage.src = res.url;
+                         showToast("Foto permanente salva com sucesso!", "success");
+                     } else {
+                         showToast("Erro no Drive: " + res.erro, "error");
+                     }
+                 })
+                 .catch(err => {
+                     showToast("Falha de internet ao salvar a foto.", "error");
+                 });
+           };
+           img.src = event.target.result;
+       };
+       reader.readAsDataURL(file);
+       AppElements.cameraInput.value = '';
+    });
+
+    // Lógica Autocomplete Dinâmico
+    AppElements.barcode.addEventListener('input', function(e) {
+      const q = e.target.value.toLowerCase().trim();
+      const list = AppElements.suggestionsList;
+      list.innerHTML = '';
+      
+      if (q.length < 2 || globalDicionario.length === 0) {
+         list.style.display = 'none';
+         return;
+      }
+      
+      const filtered = globalDicionario.filter(item => 
+         String(item.nome).toLowerCase().includes(q) || String(item.codigo).includes(q)
+      ).slice(0, 10);
+      
+      if (filtered.length > 0) {
+         filtered.forEach(item => {
+             let li = document.createElement('li');
+             li.className = 'sug-item';
+             li.innerHTML = '<span class="sug-name">' + item.nome + '</span><span class="sug-code">' + item.codigo + '</span>';
+             li.onclick = function() {
+                 AppElements.barcode.value = item.codigo;
+                 list.style.display = 'none';
+                 searchProduct();
+             };
+             list.appendChild(li);
+         });
+         list.style.display = 'flex';
+      } else {
+         list.style.display = 'none';
+      }
+    });
+
+    document.addEventListener('click', function(e) {
+      if(AppElements.suggestionsList && !AppElements.barcode.contains(e.target) && !AppElements.suggestionsList.contains(e.target)){
+          AppElements.suggestionsList.style.display = 'none';
+      }
+    });
+
+    window.onload = function() { 
+        AppElements.barcode.focus(); 
+        carregarDicionario();
+    };
+  </script>
+</body>
+</html>
