@@ -322,7 +322,7 @@
     // ==========================================
     // CONFIGURAÇÃO DA API DO APP SCRIPT
     // ==========================================
-    const API_URL = "https://script.google.com/macros/s/AKfycbyb_LPs92C6yOyt82cpo-5Nh77wQQwpGz_c4o-pCa49cTIoF3HXfJjC8g61RuD6y_9b/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbx3Iio-PEEwydM1rscZPIVsZ5LHLzNGF2061WUxXZsakZNhY9WAG5KEQI5XVnBztgIl/exec";
 
     const AppElements = {
       barcode: document.getElementById('barcode'),
@@ -814,6 +814,18 @@
             div.style.position = 'relative';
 
             let btnHtml = '<button style="position:absolute; top:8px; right:8px; background:transparent; border:none; color:var(--error); cursor:pointer; font-size: 13px; font-weight:bold;" onclick="removerItemCupom(' + index + ')" title="Remover">- Remover</button>';
+            let imgHtml = '';
+            
+            if (item.foto_off) {
+                imgHtml = '<img src="' + item.foto_off + '" style="width:50px; height:50px; object-fit:contain; border-radius:8px; margin-bottom:5px; background: #fff;" alt="Foto Produto">';
+            }
+            
+            // Exibir código pra ele ter certeza que achou!
+            let codHtml = '';
+            if (item.codigo_off) {
+                codHtml = '<p style="font-size:10px; color:#00e676; margin-bottom: -5px;">Encontrado: Cód ' + item.codigo_off + '</p>';
+            }
+
             let lblNome = '<label style="font-size:11px; color:var(--text-muted); margin-bottom:-4px; text-transform:uppercase;">Produto</label>';
             let inNome = '<input type="text" id="rec_nome_' + index + '" value="' + item.nome + '" style="padding:10px; font-size:14px; background:rgba(255,255,255,0.05); color: #fff; border: 1px solid var(--glass-border); border-radius: 6px;">';
             let lblPreco = '<label style="font-size:11px; color:var(--text-muted); margin-bottom:-4px; text-transform:uppercase;">Preço (R$)</label>';
@@ -821,7 +833,7 @@
             let valPreco = isNaN(preNum) ? '' : preNum.toFixed(2);
             let inPreco = '<input type="number" step="0.01" id="rec_preco_' + index + '" value="' + valPreco + '" style="padding:10px; font-size:14px; background:rgba(255,255,255,0.05); color:var(--success); font-weight:bold; border: 1px solid var(--glass-border); border-radius: 6px;">';
 
-            div.innerHTML = btnHtml + lblNome + inNome + lblPreco + inPreco;
+            div.innerHTML = btnHtml + imgHtml + codHtml + lblNome + inNome + lblPreco + inPreco;
             AppElements.receiptItemsList.appendChild(div);
         });
     }
@@ -854,7 +866,10 @@
                let n = nInfo.value.trim();
                let p = pInfo.value.trim();
                if (n && p) {
-                  itensFinais.push({nome: n, preco: p});
+                  // Manter os atributos encontrados do OpenFood pra enviar!
+                  let codOff = currentReceiptItems[i].codigo_off;
+                  let fotOff = currentReceiptItems[i].foto_off;
+                  itensFinais.push({nome: n, preco: p, codigo_off: codOff, foto_off: fotOff});
                }
             }
         }
