@@ -322,7 +322,7 @@
     // ==========================================
     // CONFIGURAÇÃO DA API DO APP SCRIPT
     // ==========================================
-    const API_URL = "https://script.google.com/macros/s/AKfycbx3Iio-PEEwydM1rscZPIVsZ5LHLzNGF2061WUxXZsakZNhY9WAG5KEQI5XVnBztgIl/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbwAK5DUQWdduiqKgUu7bwWZ5nlLvZPI22i-waDKKx4snF3p7d_BXJdC-2s8CnH8Ot6S/exec";
 
     const AppElements = {
       barcode: document.getElementById('barcode'),
@@ -822,8 +822,9 @@
             
             // Exibir código pra ele ter certeza que achou!
             let codHtml = '';
-            if (item.codigo_off) {
-                codHtml = '<p style="font-size:10px; color:#00e676; margin-bottom: -5px;">Encontrado: Cód ' + item.codigo_off + '</p>';
+            let dispCod = item.codigo_barras || item.codigo_off || '';
+            if (dispCod) {
+                codHtml = '<p style="font-size:10px; color:#00e676; margin-bottom: -5px;">Cód: ' + dispCod + '</p>';
             }
 
             let lblNome = '<label style="font-size:11px; color:var(--text-muted); margin-bottom:-4px; text-transform:uppercase;">Produto</label>';
@@ -867,9 +868,10 @@
                let p = pInfo.value.trim();
                if (n && p) {
                   // Manter os atributos encontrados do OpenFood pra enviar!
-                  let codOff = currentReceiptItems[i].codigo_off;
-                  let fotOff = currentReceiptItems[i].foto_off;
-                  itensFinais.push({nome: n, preco: p, codigo_off: codOff, foto_off: fotOff});
+                  let codBars = currentReceiptItems[i].codigo_barras || "";
+                  let codOff = currentReceiptItems[i].codigo_off || "";
+                  let fotOff = currentReceiptItems[i].foto_off || "";
+                  itensFinais.push({nome: n, preco: p, codigo_barras: codBars, codigo_off: codOff, foto_off: fotOff});
                }
             }
         }
