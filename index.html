@@ -866,7 +866,7 @@
         AppElements.saveReceiptBtn.innerHTML = 'Salvando Lote... <div class="loader" style="width:16px;height:16px;display:inline-block;border-width:2px;margin-left:8px;"></div>';
         AppElements.saveReceiptBtn.disabled = true;
 
-        callBackend('salvarLoteProdutos', { supermercado: mercado, itens: itensFinais })
+        callBackend('salvarLoteProdutos', { dadosLote: { supermercado: mercado, itens: itensFinais } })
           .then(res => {
               showToast(res.mensagem || 'Lote salvo com sucesso!', 'success');
               AppElements.cancelReceiptBtn.click();
@@ -874,6 +874,7 @@
               AppElements.saveReceiptBtn.disabled = false;
           })
           .catch(err => {
+              alert('Erro detalhado: ' + (err.message || err));
               showToast('Erro ao salvar lote na planilha.', 'error');
               AppElements.saveReceiptBtn.innerHTML = orgHtml;
               AppElements.saveReceiptBtn.disabled = false;
