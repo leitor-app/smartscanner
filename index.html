@@ -778,6 +778,7 @@
                      if(msg.includes('GEMINI_API_KEY_MISSING')) {
                         alert('Atenção: Você precisa colocar sua Chave de API do Gemini no arquivo Codigo.gs para usar essa função!');
                      } else {
+                        alert('Detalhes do Erro:\n' + msg + '\n\nATENÇÃO: Se o erro disser "Metodo nao encontrado: processarNotaFiscal", significa que você ESQUECEU de gerar uma Nova Implantação no Apps Script. Feche isso, vá no Apps Script e clique em "Implantar" > "Nova implantação".');
                         showToast('Falha na IA ao ler a nota. Tente tirar outra foto.', 'error');
                      }
                  });
