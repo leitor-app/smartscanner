@@ -347,7 +347,8 @@
 
       <div class="input-group" style="margin-top: 15px;">
         <div style="display: flex; gap: 10px; position: relative;">
-          <input type="text" id="newItemName" placeholder="Adicionar à lista (ex: Arroz ou Cód)" autocomplete="off" style="flex: 1;">
+          <input type="text" id="newItemName" placeholder="Produto (ex: Arroz)" autocomplete="off" style="flex: 1;">
+          <input type="number" id="newItemQuantity" value="1" min="1" style="width: 70px; text-align: center; padding: 12px; border-radius: 12px; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--glass-border); color: var(--text-main);" title="Quantidade">
           <ul id="shoppingSuggestionsList" style="display: none; position: absolute; top: calc(100% + 8px); left: 0; width: 100%; max-height: 200px; overflow-y: auto; background: #1e293b; border: 1px solid var(--glass-border); border-radius: 12px; z-index: 50; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.8); list-style: none; padding: 5px;"></ul>
           <button class="btn" id="quickAddBtn" style="padding: 12px; border-radius: 12px;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -421,6 +422,7 @@
       shoppingListScreen: document.getElementById('shoppingListScreen'),
       estimatedTotal: document.getElementById('estimatedTotal'),
       newItemName: document.getElementById('newItemName'),
+      newItemQuantity: document.getElementById('newItemQuantity'),
       shoppingSuggestionsList: document.getElementById('shoppingSuggestionsList'),
       quickAddBtn: document.getElementById('quickAddBtn'),
       shoppingList: document.getElementById('shoppingList'),
@@ -648,6 +650,7 @@
       }
       
       AppElements.saveBtn.style.display = 'flex';
+      AppElements.addToListBtn.style.display = 'flex';
       AppElements.price.focus();
     }
 
@@ -700,6 +703,7 @@
       AppElements.emptyState.style.display = 'block';
       AppElements.emptyState.textContent = 'Digite um código de barras...';
       AppElements.saveBtn.style.display = 'none';
+      AppElements.addToListBtn.style.display = 'none';
       AppElements.saveBtn.innerHTML = 'Salvar Preço na Planilha';
       AppElements.saveBtn.disabled = false;
       currentProduct = null;
@@ -1131,7 +1135,7 @@
             };
 
             let nameSpan = document.createElement('span');
-            nameSpan.textContent = item.nome;
+            nameSpan.textContent = (item.quantidade || 1) + 'x ' + item.nome;
             nameSpan.style.fontWeight = '600';
             nameSpan.style.textDecoration = item.comprado ? 'line-through' : 'none';
 
@@ -1218,6 +1222,9 @@
         const nome = AppElements.newItemName.value.trim();
         if (!nome) return;
         
+        let qtd = parseInt(AppElements.newItemQuantity.value) || 1;
+        if (qtd < 1) qtd = 1;
+        
         // Tentar achar um preço no dicionário geral
         let precoCopia = 0;
         let achado = globalDicionario.find(d => String(d.nome).toLowerCase().includes(nome.toLowerCase()));
@@ -1229,13 +1236,14 @@
         let novoBot = {
             id: Date.now().toString(),
             nome: nome,
-            quantidade: 1,
+            quantidade: qtd,
             precoReferencia: precoCopia || 0,
             comprado: false
         };
 
         globalShoppingList.unshift(novoBot);
         AppElements.newItemName.value = '';
+        AppElements.newItemQuantity.value = '1';
         renderShoppingList();
         
         showToast('Item adicionado!', 'success');
