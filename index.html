@@ -85,6 +85,13 @@
     select option { background: #203a43; color: #fff; }
 
     input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 210, 255, 0.2); }
+    
+    #barcode {
+      font-size: 19px;
+      padding: 16px 18px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
 
     .btn {
       background: linear-gradient(45deg, #3a7bd5, #00d2ff);
@@ -322,7 +329,7 @@
     // ==========================================
     // CONFIGURAÇÃO DA API DO APP SCRIPT
     // ==========================================
-    const API_URL = "https://script.google.com/macros/s/AKfycbyCWZi5Mt-la76BjdmrMx1wI4mxK2LHBZvBjyjHq_9Dqpv4kvBQlygs6oRxx3l017G4/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbxPLjUohkjyRa7WVYX9KcGK0Kton0uEOwJeQg_MZ0WZLKj6CCcirc_kJoqjwuVsAlkS/exec";
 
     const AppElements = {
       barcode: document.getElementById('barcode'),
