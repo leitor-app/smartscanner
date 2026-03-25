@@ -347,8 +347,7 @@
 
       <div class="input-group" style="margin-top: 15px;">
         <div style="display: flex; gap: 10px; position: relative;">
-          <input type="text" id="newItemName" placeholder="Produto (ex: Arroz)" autocomplete="off" style="flex: 1;">
-          <input type="number" id="newItemQuantity" value="1" min="1" style="width: 70px; text-align: center; padding: 12px; border-radius: 12px; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--glass-border); color: var(--text-main);" title="Quantidade">
+          <input type="text" id="newItemName" placeholder="Produto (ex: Arroz ou Cód)" autocomplete="off" style="flex: 1;">
           <ul id="shoppingSuggestionsList" style="display: none; position: absolute; top: calc(100% + 8px); left: 0; width: 100%; max-height: 200px; overflow-y: auto; background: #1e293b; border: 1px solid var(--glass-border); border-radius: 12px; z-index: 50; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.8); list-style: none; padding: 5px;"></ul>
           <button class="btn" id="quickAddBtn" style="padding: 12px; border-radius: 12px;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -422,7 +421,6 @@
       shoppingListScreen: document.getElementById('shoppingListScreen'),
       estimatedTotal: document.getElementById('estimatedTotal'),
       newItemName: document.getElementById('newItemName'),
-      newItemQuantity: document.getElementById('newItemQuantity'),
       shoppingSuggestionsList: document.getElementById('shoppingSuggestionsList'),
       quickAddBtn: document.getElementById('quickAddBtn'),
       shoppingList: document.getElementById('shoppingList'),
@@ -1134,18 +1132,67 @@
                 renderShoppingList();
             };
 
+            let divQtd = document.createElement('div');
+            divQtd.style.display = 'flex';
+            divQtd.style.alignItems = 'center';
+            divQtd.style.gap = '8px';
+            divQtd.style.marginRight = '10px';
+
+            let btnMenos = document.createElement('button');
+            btnMenos.innerHTML = '-';
+            btnMenos.style.width = '24px';
+            btnMenos.style.height = '24px';
+            btnMenos.style.borderRadius = '50%';
+            btnMenos.style.border = 'none';
+            btnMenos.style.background = 'rgba(255,255,255,0.1)';
+            btnMenos.style.color = '#fff';
+            btnMenos.style.cursor = 'pointer';
+            btnMenos.onclick = function() {
+                if (item.quantidade > 1) {
+                    item.quantidade--;
+                    sincronizarItemLista(item);
+                    renderShoppingList();
+                }
+            };
+
+            let qtdSpan = document.createElement('span');
+            qtdSpan.textContent = item.quantidade || 1;
+            qtdSpan.style.fontWeight = 'bold';
+            qtdSpan.style.minWidth = '15px';
+            qtdSpan.style.textAlign = 'center';
+
+            let btnMais = document.createElement('button');
+            btnMais.innerHTML = '+';
+            btnMais.style.width = '24px';
+            btnMais.style.height = '24px';
+            btnMais.style.borderRadius = '50%';
+            btnMais.style.border = 'none';
+            btnMais.style.background = 'var(--primary)';
+            btnMais.style.color = '#fff';
+            btnMais.style.cursor = 'pointer';
+            btnMais.onclick = function() {
+                item.quantidade = (item.quantidade || 1) + 1;
+                sincronizarItemLista(item);
+                renderShoppingList();
+            };
+
+            divQtd.appendChild(btnMenos);
+            divQtd.appendChild(qtdSpan);
+            divQtd.appendChild(btnMais);
+
             let nameSpan = document.createElement('span');
-            nameSpan.textContent = (item.quantidade || 1) + 'x ' + item.nome;
+            nameSpan.textContent = item.nome;
             nameSpan.style.fontWeight = '600';
             nameSpan.style.textDecoration = item.comprado ? 'line-through' : 'none';
 
             let priceSpan = document.createElement('span');
-            priceSpan.textContent = (!isNaN(precoRef) && precoRef > 0) ? `(Est: R$ ${precoRef.toFixed(2)})` : '';
+            priceSpan.textContent = (!isNaN(precoRef) && precoRef > 0) ? `(Est: R$ ${(precoRef * (item.quantidade || 1)).toFixed(2)})` : '';
             priceSpan.style.fontSize = '12px';
             priceSpan.style.color = 'var(--text-muted)';
             priceSpan.style.marginLeft = '8px';
 
             divInfo.appendChild(chk);
+            divInfo.appendChild(divQtd);
             divInfo.appendChild(nameSpan);
             divInfo.appendChild(priceSpan);
 
@@ -1218,35 +1265,44 @@
     });
 
     // Adicionar rapidamente por nome
-    function quickAddItem() {
+    async function quickAddItem() {
         const nome = AppElements.newItemName.value.trim();
         if (!nome) return;
         
-        let qtd = parseInt(AppElements.newItemQuantity.value) || 1;
-        if (qtd < 1) qtd = 1;
+        let qtd = 1;
         
-        // Tentar achar um preço no dicionário geral
-        let precoCopia = 0;
-        let achado = globalDicionario.find(d => String(d.nome).toLowerCase().includes(nome.toLowerCase()));
-        if (achado && achado.precos && achado.precos.length > 0) {
-           let nums = achado.precos.map(p => parseFloat(String(p.preco).replace(',', '.'))).filter(n => !isNaN(n));
-           if (nums.length > 0) precoCopia = Math.min(...nums);
-        }
-
         let novoBot = {
             id: Date.now().toString(),
             nome: nome,
             quantidade: qtd,
-            precoReferencia: precoCopia || 0,
+            precoReferencia: 0,
             comprado: false
         };
 
         globalShoppingList.unshift(novoBot);
         AppElements.newItemName.value = '';
-        AppElements.newItemQuantity.value = '1';
         renderShoppingList();
         
-        showToast('Item adicionado!', 'success');
+        showToast('Adicionado...', 'success');
+        
+        // Tentar buscar o preço real via backend pra dar o estimativo certo
+        let achado = globalDicionario.find(d => String(d.nome).toLowerCase().includes(nome.toLowerCase()));
+        if (achado) {
+            novoBot.id = achado.codigo; // Sincroniza o ID correto
+            try {
+                if (API_URL !== "COLE_SUA_URL_DO_APPS_SCRIPT_AQUI") {
+                    let res = await callBackend('buscarProdutoNaPlanilha', { codigo: achado.codigo });
+                    if (res && res.precos && res.precos.length > 0) {
+                        let nums = res.precos.map(p => parseFloat(String(p.preco).replace(',', '.'))).filter(n => !isNaN(n));
+                        if (nums.length > 0) {
+                            novoBot.precoReferencia = Math.min(...nums);
+                            renderShoppingList(); // Atualiza a tela com a estimativa correta!
+                        }
+                    }
+                }
+            } catch(e) { console.error("Falha ao buscar estimativa real", e); }
+        }
+
         sincronizarItemLista(novoBot);
     }
 
