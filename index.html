@@ -201,18 +201,23 @@
       <input type="file" id="receiptFileBtn" accept="image/*" capture="environment" style="display: none;">
 
       <div class="input-group">
-        <label for="barcode">Pesquisar por Código ou Nome</label>
-        <div class="search-row" style="position: relative;">
+        <label for="barcode" style="margin-bottom: 2px;">Pesquisar por Código ou Nome</label>
+        <div style="position: relative;">
           <input type="text" inputmode="text" id="barcode" placeholder="Ex: Yakult ou 789..." autocomplete="off">
-          <button class="btn btn-icon" id="scanCameraBtn" title="Ler Código com a Câmera" style="background: linear-gradient(45deg, #00d2ff, #3a7bd5); padding: 12px;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5v2a2 2 0 0 0 2 2h2"></path><path d="M4 19v-2a2 2 0 0 1 2-2h2"></path><path d="M20 5v2a2 2 0 0 1-2 2h-2"></path><path d="M20 19v-2a2 2 0 0 0-2-2h-2"></path><line x1="9" y1="9" x2="9" y2="15"></line><line x1="12" y1="9" x2="12" y2="15"></line><line x1="15" y1="9" x2="15" y2="15"></line></svg>
-          </button>
-          <button class="btn btn-icon" id="searchBtn" title="Pesquisar">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          </button>
           
           <!-- Menu Suspenso de Sugestões -->
           <ul id="suggestionsList" style="display: none; position: absolute; top: calc(100% + 8px); left: 0; width: 100%; max-height: 250px; overflow-y: auto; background: #1b2a33; border: 1px solid var(--glass-border); border-radius: 12px; z-index: 50; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.8); list-style: none; padding: 5px;"></ul>
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 5px;">
+          <button class="btn" id="scanCameraBtn" title="Câmera" style="flex: 1; background: linear-gradient(45deg, #00d2ff, #3a7bd5); padding: 12px; border-radius: 10px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+            Câmera
+          </button>
+          <button class="btn" id="searchBtn" style="flex: 1; padding: 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.1); border: 1px solid var(--glass-border);" title="Pesquisar">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            Buscar
+          </button>
         </div>
       </div>
 
