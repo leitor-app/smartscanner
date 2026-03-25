@@ -346,8 +346,9 @@
       </header>
 
       <div class="input-group" style="margin-top: 15px;">
-        <div style="display: flex; gap: 10px;">
-          <input type="text" id="newItemName" placeholder="Adicionar à lista (ex: Arroz)" autocomplete="off" style="flex: 1;">
+        <div style="display: flex; gap: 10px; position: relative;">
+          <input type="text" id="newItemName" placeholder="Adicionar à lista (ex: Arroz ou Cód)" autocomplete="off" style="flex: 1;">
+          <ul id="shoppingSuggestionsList" style="display: none; position: absolute; top: calc(100% + 8px); left: 0; width: 100%; max-height: 200px; overflow-y: auto; background: #1e293b; border: 1px solid var(--glass-border); border-radius: 12px; z-index: 50; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.8); list-style: none; padding: 5px;"></ul>
           <button class="btn" id="quickAddBtn" style="padding: 12px; border-radius: 12px;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           </button>
@@ -413,12 +414,14 @@
       receiptMarket: document.getElementById('receiptMarket'),
       receiptItemsList: document.getElementById('receiptItemsList'),
       receiptItemsCount: document.getElementById('receiptItemsCount'),
+      receiptItemsCount: document.getElementById('receiptItemsCount'),
       saveReceiptBtn: document.getElementById('saveReceiptBtn'),
       cancelReceiptBtn: document.getElementById('cancelReceiptBtn'),
       shoppingListBtn: document.getElementById('shoppingListBtn'),
       shoppingListScreen: document.getElementById('shoppingListScreen'),
       estimatedTotal: document.getElementById('estimatedTotal'),
       newItemName: document.getElementById('newItemName'),
+      shoppingSuggestionsList: document.getElementById('shoppingSuggestionsList'),
       quickAddBtn: document.getElementById('quickAddBtn'),
       shoppingList: document.getElementById('shoppingList'),
       clearBoughtBtn: document.getElementById('clearBoughtBtn'),
@@ -1073,6 +1076,9 @@
       if(AppElements.suggestionsList && !AppElements.barcode.contains(e.target) && !AppElements.suggestionsList.contains(e.target)){
           AppElements.suggestionsList.style.display = 'none';
       }
+      if(AppElements.shoppingSuggestionsList && !AppElements.newItemName.contains(e.target) && !AppElements.shoppingSuggestionsList.contains(e.target)){
+          AppElements.shoppingSuggestionsList.style.display = 'none';
+      }
     });
 
     // ===================================
@@ -1239,6 +1245,38 @@
     AppElements.quickAddBtn.addEventListener('click', quickAddItem);
     AppElements.newItemName.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') quickAddItem();
+    });
+
+    AppElements.newItemName.addEventListener('input', function(e) {
+        const q = e.target.value.toLowerCase().trim();
+        const list = AppElements.shoppingSuggestionsList;
+        list.innerHTML = '';
+        
+        if (q.length < 2 || globalDicionario.length === 0) {
+           list.style.display = 'none';
+           return;
+        }
+        
+        const filtered = globalDicionario.filter(item => 
+           String(item.nome).toLowerCase().includes(q) || String(item.codigo).includes(q)
+        ).slice(0, 10);
+        
+        if (filtered.length > 0) {
+           filtered.forEach(item => {
+               let li = document.createElement('li');
+               li.className = 'sug-item';
+               li.innerHTML = '<span class="sug-name">' + item.nome + '</span><span class="sug-code">' + item.codigo + '</span>';
+               li.onclick = function() {
+                   AppElements.newItemName.value = item.nome;
+                   list.style.display = 'none';
+                   quickAddItem();
+               };
+               list.appendChild(li);
+           });
+           list.style.display = 'flex';
+        } else {
+           list.style.display = 'none';
+        }
     });
 
     // Adicionar pela tela do produto
