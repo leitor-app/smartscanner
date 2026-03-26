@@ -1430,20 +1430,19 @@
             });
     });
 
-    // Ajuste mobile: Rolar a página para o topo ao focar no input, evitando que o teclado cubra os resultados
+    // Ajuste mobile: Rolar a página para focar no input, evitando que o teclado cubra os resultados
     [AppElements.barcode, AppElements.newItemName].forEach(function(input) {
         if (input) {
-            input.addEventListener('focus', function() {
+            input.addEventListener('click', function() {
                 var elem = this;
                 setTimeout(function() {
-                    elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }, 400); // Aguarda o tempo necessário para a maioria dos teclados abrirem
             });
         }
     });
 
     window.onload = function() { 
-        AppElements.barcode.focus(); 
         carregarDicionario();
     };
   </script>
