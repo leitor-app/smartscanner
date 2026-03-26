@@ -316,8 +316,9 @@
       </header>
 
       <div class="input-group" style="margin-top: 20px;">
-        <label for="receiptMarket">Supermercado</label>
-        <input type="text" id="receiptMarket" placeholder="Ex: Supermercado Extra" autocomplete="off">
+        <label for="receiptMarket">Supermercado <span style="color:var(--error); font-size:16px;">*</span></label>
+        <input type="text" id="receiptMarket" placeholder="Selecione ou digite um novo..." list="mercadosDatacenter" autocomplete="off">
+        <datalist id="mercadosDatacenter"></datalist>
       </div>
       
       <div class="input-group" style="margin-top: 15px;">
@@ -863,6 +864,18 @@
     function abrirTelaRevisaoComprovante(dados) {
         AppElements.scannerScreen.style.display = 'none';
         AppElements.receiptScreen.style.display = 'block';
+        
+        const dt = document.getElementById('mercadosDatacenter');
+        if (dt) {
+            dt.innerHTML = '';
+            if (globalSupermercados && globalSupermercados.length > 0) {
+                globalSupermercados.forEach(function(nome) {
+                    let opt = document.createElement('option');
+                    opt.value = nome;
+                    dt.appendChild(opt);
+                });
+            }
+        }
         
         AppElements.receiptMarket.value = dados.supermercado || '';
         currentReceiptItems = dados.itens;
