@@ -1122,34 +1122,61 @@
             li.style.alignItems = 'center';
             li.style.justifyContent = 'space-between';
             li.style.background = item.comprado ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.05)';
-            li.style.padding = '12px 15px';
-            li.style.borderRadius = '10px';
+            li.style.padding = '15px';
+            li.style.borderRadius = '12px';
             li.style.border = '1px solid var(--glass-border)';
-            li.style.opacity = item.comprado ? '0.5' : '1';
+            li.style.opacity = item.comprado ? '0.6' : '1';
+            li.style.transition = 'all 0.3s ease';
 
-            let divInfo = document.createElement('div');
-            divInfo.style.display = 'flex';
-            divInfo.style.alignItems = 'center';
-            divInfo.style.gap = '10px';
-            divInfo.style.flex = '1';
+            let mainCol = document.createElement('div');
+            mainCol.style.display = 'flex';
+            mainCol.style.flexDirection = 'column';
+            mainCol.style.gap = '10px';
+            mainCol.style.flex = '1';
+
+            // Top Row: Checkbox + Name
+            let rowTop = document.createElement('div');
+            rowTop.style.display = 'flex';
+            rowTop.style.alignItems = 'center';
+            rowTop.style.gap = '12px';
 
             let chk = document.createElement('input');
             chk.type = 'checkbox';
             chk.checked = item.comprado;
-            chk.style.width = '20px';
-            chk.style.height = '20px';
+            chk.style.width = '22px';
+            chk.style.height = '22px';
             chk.style.cursor = 'pointer';
+            chk.style.accentColor = 'var(--primary)';
             chk.onchange = function() {
                 item.comprado = chk.checked;
                 sincronizarItemLista(item);
                 renderShoppingList();
             };
 
+            let nameSpan = document.createElement('span');
+            nameSpan.textContent = item.nome;
+            nameSpan.style.fontWeight = '600';
+            nameSpan.style.fontSize = '15px';
+            nameSpan.style.color = item.comprado ? 'var(--text-muted)' : '#fff';
+            nameSpan.style.textDecoration = item.comprado ? 'line-through' : 'none';
+
+            rowTop.appendChild(chk);
+            rowTop.appendChild(nameSpan);
+
+            // Bottom Row: Qty Controls + Subtotal
+            let rowBottom = document.createElement('div');
+            rowBottom.style.display = 'flex';
+            rowBottom.style.alignItems = 'center';
+            rowBottom.style.gap = '15px';
+            rowBottom.style.marginLeft = '34px'; // alignments with text
+
             let divQtd = document.createElement('div');
             divQtd.style.display = 'flex';
             divQtd.style.alignItems = 'center';
-            divQtd.style.gap = '8px';
-            divQtd.style.marginRight = '10px';
+            divQtd.style.gap = '10px';
+            divQtd.style.background = 'rgba(0,0,0,0.2)';
+            divQtd.style.padding = '4px 8px';
+            divQtd.style.borderRadius = '20px';
 
             let btnMenos = document.createElement('button');
             btnMenos.innerHTML = '-';
@@ -1160,6 +1187,7 @@
             btnMenos.style.background = 'rgba(255,255,255,0.1)';
             btnMenos.style.color = '#fff';
             btnMenos.style.cursor = 'pointer';
+            btnMenos.style.fontWeight = 'bold';
             btnMenos.onclick = function() {
                 if (item.quantidade > 1) {
                     item.quantidade--;
@@ -1171,8 +1199,9 @@
             let qtdSpan = document.createElement('span');
             qtdSpan.textContent = item.quantidade || 1;
             qtdSpan.style.fontWeight = 'bold';
-            qtdSpan.style.minWidth = '15px';
+            qtdSpan.style.minWidth = '16px';
             qtdSpan.style.textAlign = 'center';
+            qtdSpan.style.fontSize = '14px';
 
             let btnMais = document.createElement('button');
             btnMais.innerHTML = '+';
@@ -1183,6 +1212,7 @@
             btnMais.style.background = 'var(--primary)';
             btnMais.style.color = '#fff';
             btnMais.style.cursor = 'pointer';
+            btnMais.style.fontWeight = 'bold';
             btnMais.onclick = function() {
                 item.quantidade = (item.quantidade || 1) + 1;
                 sincronizarItemLista(item);
@@ -1193,35 +1223,31 @@
             divQtd.appendChild(qtdSpan);
             divQtd.appendChild(btnMais);
 
-            let nameSpan = document.createElement('span');
-            nameSpan.textContent = item.nome;
-            nameSpan.style.fontWeight = '600';
-            nameSpan.style.textDecoration = item.comprado ? 'line-through' : 'none';
-
             let priceSpan = document.createElement('span');
             priceSpan.textContent = (!isNaN(precoRef) && precoRef > 0) ? `(Est: R$ ${(precoRef * (item.quantidade || 1)).toFixed(2)})` : '';
-            priceSpan.style.fontSize = '12px';
+            priceSpan.style.fontSize = '13px';
             priceSpan.style.color = 'var(--text-muted)';
-            priceSpan.style.marginLeft = '8px';
+            priceSpan.style.fontWeight = '500';
 
-            divInfo.appendChild(chk);
-            divInfo.appendChild(divQtd);
-            divInfo.appendChild(nameSpan);
-            divInfo.appendChild(priceSpan);
+            rowBottom.appendChild(divQtd);
+            rowBottom.appendChild(priceSpan);
+
+            mainCol.appendChild(rowTop);
+            mainCol.appendChild(rowBottom);
 
             let btnRemover = document.createElement('button');
-            btnRemover.innerHTML = '×';
+            btnRemover.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>';
             btnRemover.style.background = 'transparent';
             btnRemover.style.border = 'none';
-            btnRemover.style.color = 'var(--error)';
-            btnRemover.style.fontSize = '24px';
+            btnRemover.style.color = 'var(--text-muted)';
             btnRemover.style.cursor = 'pointer';
-            btnRemover.style.padding = '0 5px';
+            btnRemover.style.padding = '10px';
+            btnRemover.style.marginLeft = '5px';
             btnRemover.onclick = function() {
                 removerItemLista(index, item.id);
             };
 
-            li.appendChild(divInfo);
+            li.appendChild(mainCol);
             li.appendChild(btnRemover);
             AppElements.shoppingList.appendChild(li);
         });
