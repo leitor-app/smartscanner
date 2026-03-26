@@ -1430,6 +1430,18 @@
             });
     });
 
+    // Ajuste mobile: Rolar a página para o topo ao focar no input, evitando que o teclado cubra os resultados
+    [AppElements.barcode, AppElements.newItemName].forEach(function(input) {
+        if (input) {
+            input.addEventListener('focus', function() {
+                var elem = this;
+                setTimeout(function() {
+                    elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 400); // Aguarda o tempo necessário para a maioria dos teclados abrirem
+            });
+        }
+    });
+
     window.onload = function() { 
         AppElements.barcode.focus(); 
         carregarDicionario();
