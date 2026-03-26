@@ -1133,12 +1133,14 @@
             mainCol.style.flexDirection = 'column';
             mainCol.style.gap = '10px';
             mainCol.style.flex = '1';
+            mainCol.style.minWidth = '0';
 
             // Top Row: Checkbox + Name
             let rowTop = document.createElement('div');
             rowTop.style.display = 'flex';
             rowTop.style.alignItems = 'center';
             rowTop.style.gap = '12px';
+            rowTop.style.minWidth = '0';
 
             let chk = document.createElement('input');
             chk.type = 'checkbox';
@@ -1159,6 +1161,7 @@
             nameSpan.style.fontSize = '15px';
             nameSpan.style.color = item.comprado ? 'var(--text-muted)' : '#fff';
             nameSpan.style.textDecoration = item.comprado ? 'line-through' : 'none';
+            nameSpan.style.wordBreak = 'break-word';
 
             rowTop.appendChild(chk);
             rowTop.appendChild(nameSpan);
@@ -1224,10 +1227,11 @@
             divQtd.appendChild(btnMais);
 
             let priceSpan = document.createElement('span');
-            priceSpan.textContent = (!isNaN(precoRef) && precoRef > 0) ? `(Est: R$ ${(precoRef * (item.quantidade || 1)).toFixed(2)})` : '';
+            priceSpan.textContent = (!isNaN(precoRef) && precoRef > 0) ? `R$ ${(precoRef * (item.quantidade || 1)).toFixed(2)}` : '';
             priceSpan.style.fontSize = '13px';
             priceSpan.style.color = 'var(--text-muted)';
             priceSpan.style.fontWeight = '500';
+            priceSpan.style.whiteSpace = 'nowrap';
 
             rowBottom.appendChild(divQtd);
             rowBottom.appendChild(priceSpan);
@@ -1241,8 +1245,8 @@
             btnRemover.style.border = 'none';
             btnRemover.style.color = 'var(--text-muted)';
             btnRemover.style.cursor = 'pointer';
-            btnRemover.style.padding = '10px';
-            btnRemover.style.marginLeft = '5px';
+            btnRemover.style.padding = '8px';
+            btnRemover.style.flexShrink = '0';
             btnRemover.onclick = function() {
                 removerItemLista(index, item.id);
             };
