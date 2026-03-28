@@ -31,19 +31,20 @@
       padding: 20px;
     }
 
+    /* Container principal centralizado que guarda toda a interface */
     .app-container {
       background: var(--glass-bg);
       backdrop-filter: blur(15px);
       -webkit-backdrop-filter: blur(15px);
       border: 1px solid var(--glass-border);
       border-radius: 24px;
-      padding: 40px;
+      padding: 25px; /* Reduzido de 40px para diminuir o espaço vazio */
       width: 100%;
       max-width: 450px;
       box-shadow: 0 25px 50px rgba(0,0,0,0.5);
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 15px; /* Reduzido de 24px para aproximar os itens */
       position: relative;
       overflow: hidden;
     }
@@ -116,6 +117,7 @@
     .btn-secondary { background: rgba(255, 255, 255, 0.1); border: 1px solid var(--glass-border); }
     .btn-secondary:hover { background: rgba(255, 255, 255, 0.15); box-shadow: 0 8px 20px rgba(255, 255, 255, 0.1); }
 
+    /* Cartão do Produto que exibe a foto e detalhes quando pesquisado */
     .product-card {
       background: rgba(0,0,0,0.2);
       border: 1px solid var(--glass-border);
@@ -128,7 +130,7 @@
       opacity: 0;
       transform: translateY(10px);
       transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      min-height: 200px;
+      min-height: 120px; /* Reduzido de 200px para tirar o espaço em branco enorme no mobile */
       justify-content: center;
       text-align: center;
       display: none;
@@ -380,6 +382,7 @@
   <script>
     // ==========================================
     // CONFIGURAÇÃO DA API DO APP SCRIPT
+    // A API_URL é a ponte de conexão do sistema visual com a base de dados (Planilha)
     // ==========================================
     const API_URL = "https://script.google.com/macros/s/AKfycbxLrPrb31T7vJQwcd7ziRBy3E0mhbLSP4ef2Qce-LtxBt300VjoXLBKL9H6tKyDJ2rP/exec";
 
@@ -579,7 +582,10 @@
       }
     }
 
-    function renderProduct(source) {
+    // Renderiza as informações do produto quando ele é encontrado/pesquisado
+    // Essa função pega o objeto `produto` que veio da planilha ou API
+    // E desenha os preços, imagem e dados na tela.
+    function renderProduct(produto) {
       setLoading(false);
       AppElements.productContent.style.display = 'flex';
       
@@ -632,11 +638,11 @@
       AppElements.marketSelect.innerHTML = optionsHtml;
       
       // Badges
-      if (source === 'sheet') {
+      if (produto === 'sheet') {
         AppElements.historyBadge.className = 'badge';
         AppElements.historyBadge.innerHTML = 'Encontrado na Planilha';
         AppElements.historyBadge.style.display = 'block';
-      } else if (source === 'api') {
+      } else if (produto === 'api') {
         AppElements.historyBadge.className = 'badge badge-api';
         AppElements.historyBadge.innerHTML = 'Novo da Open Food Facts';
         AppElements.historyBadge.style.display = 'block';
@@ -755,11 +761,45 @@
     
     AppElements.saveBtn.addEventListener('click', saveToSheet);
     
-    // Navegação Supermercado
+    // ===================================
+    // FUNÇÕES DE UTILIDADE E CONTROLE
+    // ===================================
+
+    // Exibe pequenos alertas na parte de baixo da tela (sucesso/erro)
+    function showToast(message, type = 'success') {
+      const toast = AppElements.toast;
+      toast.textContent = message;
+      toast.className = `show ${type}`;
+      setTimeout(() => { toast.classList.remove('show'); }, 3000); // Some após 3 segundos
+    }
+
+    // Função universal para enviar/receber dados do Google Apps Script
+    // Utiliza "post" porque estamos enviando textos longos e objetos (JSON)
+    function callBackend(method, params = {}) {
+      if (API_URL === "COLE_SUA_URL_DO_APPS_SCRIPT_AQUI") {
+        console.warn("API NÃO CONFIGURADA. Modo Local Ativado.");
+        return Promise.reject("API NÃO CONFIGURADA");
+      }
+
+      return fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ method: method, ...params })
+      }).then(res => res.json())
+        .then(data => {
+          if (data.error) throw new Error(data.error);
+          return data;
+        });
+    }
+
+    // ===================================
+    // CADASTRO LIVRE DE SUPERMERCADOS
+    // ===================================
+
+    // Transição de tela: vai para a página de Cadastro de Mercado
     AppElements.openMarketBtn.addEventListener('click', function() {
       AppElements.scannerScreen.style.display = 'none';
       AppElements.marketScreen.style.display = 'block';
-      AppElements.marketName.focus();
+      setTimeout(() => AppElements.marketName.focus(), 100);
     });
 
     AppElements.backToScannerBtn.addEventListener('click', function() {
